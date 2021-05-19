@@ -1,0 +1,2 @@
+rootProject.name = "WiFiVideoStream"
+include ':app'

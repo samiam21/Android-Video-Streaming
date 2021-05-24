@@ -1,21 +1,33 @@
 package com.sbgsoft.wifivideostream;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity {
     private static Context mContext;
+    private WifiManager.LocalOnlyHotspotReservation mReservation;
     Button connectButton;
+    Button disconnectButton;
     EditText ssidText;
     EditText passwordText;
     TextView outputConsole;
@@ -28,31 +40,65 @@ public class MainActivity extends AppCompatActivity {
         mContext = getApplicationContext();
 
         connectButton = findViewById(R.id.connectButton);
+        disconnectButton = findViewById(R.id.disconnectButton);
         ssidText = findViewById(R.id.editTextSSID);
         passwordText = findViewById(R.id.editTextPassword);
         outputConsole = findViewById(R.id.editTextOutputConsole);
 
         connectButton.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             public void onClick(View v) {
                 // Close the keyboard
                 passwordText.onEditorAction(EditorInfo.IME_ACTION_DONE);
                 ssidText.onEditorAction(EditorInfo.IME_ACTION_DONE);
 
-                outputConsole.append("Connecting to: " + ssidText.getText() + "...\n");
+                outputConsole.append("Turning on WiFi Hotspot...\n");
 
-                wifiManager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
-                wifiManager.setWifiEnabled(true);
+                // Initialize the WiFi and WiFi AP manager
+                wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 
-                WifiConfiguration wifiConfig = new WifiConfiguration();
-                wifiConfig.SSID = String.format("\"%s\"", ssidText.getText());
-                wifiConfig.preSharedKey = String.format("\"%s\"", passwordText.getText());
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    outputConsole.append("OH NO!");
+                    return;
+                }
+                wifiManager.startLocalOnlyHotspot(new WifiManager.LocalOnlyHotspotCallback() {
 
-                int netId = wifiManager.addNetwork(wifiConfig);
-                wifiManager.disconnect();
-                wifiManager.enableNetwork(netId, true);
-                wifiManager.reconnect();
+                    @Override
+                    public void onStarted(WifiManager.LocalOnlyHotspotReservation reservation) {
+                        super.onStarted(reservation);
+                        outputConsole.append("WiFi Hotspot is on now!\n");
+                        mReservation = reservation;
+                    }
 
-                outputConsole.append("Connection complete\n");
+                    @Override
+                    public void onStopped() {
+                        super.onStopped();
+                        outputConsole.append("WiFi Hotspot is off now!\n");
+                    }
+
+                    @Override
+                    public void onFailed(int reason) {
+                        super.onFailed(reason);
+                        outputConsole.append("Failed...\n");
+                    }
+                }, new Handler());
+            }
+        });
+
+        disconnectButton.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            public void onClick(View v) {
+                if (mReservation != null) {
+                    mReservation.close();
+                }
+                outputConsole.append("WiFi Hotspot is off now!\n");
             }
         });
     }

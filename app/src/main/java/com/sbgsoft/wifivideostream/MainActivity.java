@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
                 // Initialize the WiFi and WiFi AP manager
                 wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 
+                // Check to make sure we have permissions
                 if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
@@ -68,6 +70,10 @@ public class MainActivity extends AppCompatActivity {
                     outputConsole.append("OH NO!");
                     return;
                 }
+
+                // TODO: Configure the hotspot info
+
+                // Start up the hotspot
                 wifiManager.startLocalOnlyHotspot(new WifiManager.LocalOnlyHotspotCallback() {
 
                     @Override
@@ -75,6 +81,9 @@ public class MainActivity extends AppCompatActivity {
                         super.onStarted(reservation);
                         outputConsole.append("WiFi Hotspot is on now!\n");
                         mReservation = reservation;
+
+                        WifiConfiguration currentConfig = mReservation.getWifiConfiguration();
+                        outputConsole.append("SSID: " + currentConfig.SSID + " | PW: " + currentConfig.preSharedKey + "\n");
                     }
 
                     @Override

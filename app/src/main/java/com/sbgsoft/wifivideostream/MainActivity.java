@@ -92,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
                         // Get the gateway address
                         String[] tmp = currentConfig.toString().split("\n");
                         outputConsole.append(tmp[3] + "\n");
+
+                        Thread socketThread = new Thread(new SocketListener());
+                        socketThread.start();
                     }
 
                     @Override

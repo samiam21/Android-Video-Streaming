@@ -10,6 +10,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private WifiManager.LocalOnlyHotspotReservation mReservation;
     Button connectButton;
     Button disconnectButton;
+    Button getIpButton;
     EditText ssidText;
     EditText passwordText;
     TextView outputConsole;
@@ -42,9 +44,13 @@ public class MainActivity extends AppCompatActivity {
 
         connectButton = findViewById(R.id.connectButton);
         disconnectButton = findViewById(R.id.disconnectButton);
+        getIpButton = findViewById(R.id.getIpButton);
         ssidText = findViewById(R.id.editTextSSID);
         passwordText = findViewById(R.id.editTextPassword);
         outputConsole = findViewById(R.id.editTextOutputConsole);
+
+        // Initialize the WiFi and WiFi AP manager
+        wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 
         connectButton.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
@@ -54,9 +60,6 @@ public class MainActivity extends AppCompatActivity {
                 ssidText.onEditorAction(EditorInfo.IME_ACTION_DONE);
 
                 outputConsole.append("Turning on WiFi Hotspot...\n");
-
-                // Initialize the WiFi and WiFi AP manager
-                wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 
                 // Check to make sure we have permissions
                 if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -82,8 +85,13 @@ public class MainActivity extends AppCompatActivity {
                         outputConsole.append("WiFi Hotspot is on now!\n");
                         mReservation = reservation;
 
+                        // Show the connection info
                         WifiConfiguration currentConfig = mReservation.getWifiConfiguration();
                         outputConsole.append("SSID: " + currentConfig.SSID + " | PW: " + currentConfig.preSharedKey + "\n");
+
+                        // Get the gateway address
+                        String[] tmp = currentConfig.toString().split("\n");
+                        outputConsole.append(tmp[3] + "\n");
                     }
 
                     @Override
@@ -108,6 +116,14 @@ public class MainActivity extends AppCompatActivity {
                     mReservation.close();
                 }
                 outputConsole.append("WiFi Hotspot is off now!\n");
+            }
+        });
+
+        getIpButton.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            public void onClick(View v) {
+                String ip = Formatter.formatIpAddress(wifiManager.getConnectionInfo().getIpAddress());
+                outputConsole.append("IP: " + ip + "\n");
             }
         });
     }

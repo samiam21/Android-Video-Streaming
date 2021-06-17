@@ -1,5 +1,6 @@
 package com.sbgsoft.wifivideostream;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
         this.mActivity = activity;
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -30,7 +32,9 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
                 Toast.makeText(context, "WiFi is OFF", Toast.LENGTH_LONG).show();
             }
         } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
-
+            if (mManager != null) {
+                mManager.requestPeers(mChannel, mActivity.peerListListener);
+            }
         } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
 
         } else if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
